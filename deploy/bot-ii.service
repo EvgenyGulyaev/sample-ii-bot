@@ -1,0 +1,15 @@
+[Unit]
+Description=Telegram AI bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/var/go/bot-ii
+EnvironmentFile=/var/go/bot-ii/.env
+ExecStart=/var/go/bot-ii/bot-ii
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

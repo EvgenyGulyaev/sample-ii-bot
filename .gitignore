@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+
+/bot-ii
+/app
+dist/
+tmp/
+
+.DS_Store
