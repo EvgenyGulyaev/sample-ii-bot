@@ -1,6 +1,68 @@
 # sample-ii-bot
 
-Минимальный Telegram-бот на Go, который ходит в OpenAI-compatible LLM endpoint.
+Минимальный Telegram-бот на Go. Он принимает текстовые сообщения в Telegram,
+отправляет их в OpenAI-compatible LLM endpoint и возвращает ответ обратно в чат.
+
+## Что умеет
+
+- Отвечает на обычные текстовые сообщения.
+- Работает через Telegram long polling, без открытого HTTP-порта.
+- Использует Kimi через OpenAI-compatible API.
+- Держит короткую историю диалога в памяти процесса.
+- Поддерживает `/start` и `/reset`.
+- Блокирует параллельный запрос в одном чате, чтобы не плодить дорогие ответы.
+- Может ограничивать доступ по Telegram user id.
+
+## Как устроен
+
+- `cmd/bot-ii` - точка входа.
+- `internal/app` - основной цикл бота и обработка сообщений.
+- `internal/telegram` - минимальный клиент Telegram Bot API.
+- `internal/llm` - клиент `/chat/completions`.
+- `internal/config` - чтение env-настроек.
+- `internal/envfile` - загрузка локального `.env` при запуске руками.
+
+База данных не используется. История хранится только в оперативной памяти и
+сбрасывается при рестарте сервиса.
+
+## Какая ИИ используется
+
+По умолчанию бот ходит в роутер из Zed:
+
+```env
+LLM_BASE_URL=http://31.56.177.191:8317/v1
+LLM_MODEL=kimi-k2.7-code
+```
+
+Endpoint совместим с OpenAI Chat Completions:
+
+```text
+POST /chat/completions
+```
+
+Для Kimi выставлена `temperature=1`, потому что эта модель не принимает другие
+значения температуры.
+
+## Команды в Telegram
+
+- `/start` - короткое приветствие.
+- `/reset` - очистить историю текущего чата.
+
+Все остальные текстовые сообщения отправляются в нейронку.
+
+## Env
+
+- `TELEGRAM_BOT_TOKEN` - токен Telegram-бота.
+- `LLM_BASE_URL` - OpenAI-compatible base URL.
+- `LLM_MODEL` - модель, например `kimi-k2.7-code`.
+- `LLM_API_KEY` - API key.
+- `BOT_ALLOWED_USERS` - список Telegram user id через запятую. Если пусто, бот доступен всем.
+- `BOT_SYSTEM_PROMPT` - системный промпт.
+- `BOT_HISTORY_MESSAGES` - сколько последних сообщений хранить в памяти на чат.
+- `BOT_POLL_TIMEOUT_SECONDS` - timeout long polling к Telegram.
+- `BOT_REQUEST_TIMEOUT_SECONDS` - timeout запроса к нейронке.
+
+`.env` нельзя пушить в репозиторий. В git лежит только `.env.example`.
 
 ## Локальный запуск
 
@@ -9,21 +71,51 @@ cp .env.example .env
 go run ./cmd/bot-ii
 ```
 
-## Env
-
-- `TELEGRAM_BOT_TOKEN` - токен Telegram-бота.
-- `LLM_BASE_URL` - OpenAI-compatible base URL, например `http://31.56.177.191:8317/v1`.
-- `LLM_MODEL` - модель, например `kimi-k2.7-code`.
-- `LLM_API_KEY` - API key, можно оставить пустым, если endpoint не требует авторизацию.
-- `BOT_ALLOWED_USERS` - опциональный список Telegram user id через запятую. Если пусто, бот доступен всем.
-- `BOT_SYSTEM_PROMPT` - системный промпт.
-- `BOT_HISTORY_MESSAGES` - сколько последних сообщений хранить в памяти на чат.
-
 ## VPS
 
-Рабочая директория: `/var/go/bot-ii`.
+Рабочая директория:
+
+```text
+/var/go/bot-ii
+```
+
+Systemd service:
+
+```text
+bot-ii
+```
+
+Telegram с VPS ходит через локальный proxy, как основной `bot.service`:
+
+```ini
+Environment=HTTPS_PROXY=http://127.0.0.1:2081
+Environment=NO_PROXY=127.0.0.1,localhost,31.56.177.191
+```
+
+Полезные команды:
 
 ```bash
+systemctl status bot-ii
 systemctl restart bot-ii
 journalctl -u bot-ii -f
 ```
+
+## Деплой
+
+GitHub Actions собирает Linux-бинарник:
+
+```bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o bot-ii ./cmd/bot-ii
+```
+
+Потом кладет его в `${VPS_TARGET}` и рестартует `bot-ii`.
+
+Для репозитория нужны secrets:
+
+- `VPS_HOST`
+- `VPS_USER`
+- `VPS_PORT`
+- `VPS_TARGET`
+- `VPS_SSH_KEY`
+
+Для текущего VPS `VPS_TARGET=/var/go/bot-ii`.

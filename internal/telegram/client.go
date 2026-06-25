@@ -8,10 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var botTokenPattern = regexp.MustCompile(`bot[0-9]+:[A-Za-z0-9_-]+`)
 
 type Client struct {
 	baseURL string
@@ -108,7 +111,7 @@ func (c *Client) postJSON(ctx context.Context, path string, body any, target any
 func (c *Client) doJSON(req *http.Request, target any) error {
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return err
+		return sanitizeError(err)
 	}
 	defer resp.Body.Close()
 
@@ -123,6 +126,13 @@ func (c *Client) doJSON(req *http.Request, target any) error {
 		return nil
 	}
 	return json.Unmarshal(data, target)
+}
+
+func sanitizeError(err error) error {
+	if err == nil {
+		return nil
+	}
+	return fmt.Errorf("%s", botTokenPattern.ReplaceAllString(err.Error(), "bot[TOKEN]"))
 }
 
 func splitTelegramText(text string) []string {

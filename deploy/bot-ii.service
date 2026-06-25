@@ -7,6 +7,8 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/var/go/bot-ii
 EnvironmentFile=/var/go/bot-ii/.env
+Environment=HTTPS_PROXY=http://127.0.0.1:2081
+Environment=NO_PROXY=127.0.0.1,localhost,31.56.177.191
 ExecStart=/var/go/bot-ii/bot-ii
 Restart=on-failure
 RestartSec=5
