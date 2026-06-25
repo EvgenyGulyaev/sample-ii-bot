@@ -74,7 +74,7 @@ func (a *App) handleMessage(ctx context.Context, message telegram.Message) {
 	}
 
 	if strings.EqualFold(text, "/start") {
-		_ = a.tg.SendMessage(ctx, message.Chat.ID, "Привет. Напиши вопрос, я отвечу через Kimi.")
+		_ = a.tg.SendMessage(ctx, message.Chat.ID, "Привет. Напиши вопрос, я отвечу через нейронку.")
 		return
 	}
 	if strings.EqualFold(text, "/reset") {

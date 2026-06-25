@@ -24,8 +24,8 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		TelegramToken:      strings.TrimSpace(os.Getenv("TELEGRAM_BOT_TOKEN")),
-		LLMBaseURL:         trimRightSlash(env("LLM_BASE_URL", "http://31.56.177.191:8317/v1")),
-		LLMModel:           env("LLM_MODEL", "kimi-k2.7-code"),
+		LLMBaseURL:         trimRightSlash(os.Getenv("LLM_BASE_URL")),
+		LLMModel:           strings.TrimSpace(os.Getenv("LLM_MODEL")),
 		LLMAPIKey:          strings.TrimSpace(os.Getenv("LLM_API_KEY")),
 		AllowedUsers:       parseAllowedUsers(os.Getenv("BOT_ALLOWED_USERS")),
 		SystemPrompt:       env("BOT_SYSTEM_PROMPT", "Ты дружелюбный и полезный ассистент. Отвечай кратко и по делу на языке пользователя."),

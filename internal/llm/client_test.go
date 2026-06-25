@@ -20,7 +20,7 @@ func TestCompleteCallsChatCompletions(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client := New(server.URL+"/v1", "secret", "kimi-k2.7-code", time.Second)
+	client := New(server.URL+"/v1", "secret", "test-model", time.Second)
 	answer, err := client.Complete(context.Background(), []Message{{Role: "user", Content: "hi"}})
 	if err != nil {
 		t.Fatalf("Complete() error = %v", err)

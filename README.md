@@ -1,13 +1,13 @@
 # sample-ii-bot
 
 Минимальный Telegram-бот на Go. Он принимает текстовые сообщения в Telegram,
-отправляет их в OpenAI-compatible LLM endpoint и возвращает ответ обратно в чат.
+отправляет их в OpenCode и возвращает ответ обратно в чат.
 
 ## Что умеет
 
 - Отвечает на обычные текстовые сообщения.
 - Работает через Telegram long polling, без открытого HTTP-порта.
-- Использует Kimi через OpenAI-compatible API.
+- Использует OpenCode как провайдер нейронки.
 - Держит короткую историю диалога в памяти процесса.
 - Поддерживает `/start` и `/reset`.
 - Блокирует параллельный запрос в одном чате, чтобы не плодить дорогие ответы.
@@ -18,7 +18,7 @@
 - `cmd/bot-ii` - точка входа.
 - `internal/app` - основной цикл бота и обработка сообщений.
 - `internal/telegram` - минимальный клиент Telegram Bot API.
-- `internal/llm` - клиент `/chat/completions`.
+- `internal/llm` - клиент провайдера нейронки.
 - `internal/config` - чтение env-настроек.
 - `internal/envfile` - загрузка локального `.env` при запуске руками.
 
@@ -27,21 +27,8 @@
 
 ## Какая ИИ используется
 
-По умолчанию бот ходит в роутер из Zed:
-
-```env
-LLM_BASE_URL=http://31.56.177.191:8317/v1
-LLM_MODEL=kimi-k2.7-code
-```
-
-Endpoint совместим с OpenAI Chat Completions:
-
-```text
-POST /chat/completions
-```
-
-Для Kimi выставлена `temperature=1`, потому что эта модель не принимает другие
-значения температуры.
+Бот использует OpenCode-compatible провайдера нейронки. Конкретный endpoint,
+ключ и модель задаются через env и не хранятся в репозитории.
 
 ## Команды в Telegram
 
@@ -53,8 +40,8 @@ POST /chat/completions
 ## Env
 
 - `TELEGRAM_BOT_TOKEN` - токен Telegram-бота.
-- `LLM_BASE_URL` - OpenAI-compatible base URL.
-- `LLM_MODEL` - модель, например `kimi-k2.7-code`.
+- `LLM_BASE_URL` - адрес OpenCode-compatible провайдера.
+- `LLM_MODEL` - имя модели.
 - `LLM_API_KEY` - API key.
 - `BOT_ALLOWED_USERS` - список Telegram user id через запятую. Если пусто, бот доступен всем.
 - `BOT_SYSTEM_PROMPT` - системный промпт.
